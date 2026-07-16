@@ -102,6 +102,9 @@ export class LyrebirdAudioEngine {
   private leftShifter = new DelayPitchShifter(2048);
   private rightShifter = new DelayPitchShifter(2048);
 
+  // Active soundboard elements for playing, stopping and looping
+  private activeMemeSounds: Map<string, { audio: HTMLAudioElement; onEnd?: () => void }> = new Map();
+
   // Live configuration
   private currentPitchValue = 0.0; // semitones (-10 to 10)
   private currentDownsample: number | null = null;
@@ -248,6 +251,8 @@ export class LyrebirdAudioEngine {
   }
 
   public async stop() {
+    this.stopAllMemeSounds();
+
     if (this.stream) {
       this.stream.getTracks().forEach(track => track.stop());
       this.stream = null;
@@ -1130,6 +1135,174 @@ export class LyrebirdAudioEngine {
         });
         break;
       }
+      case 'daddys-home': {
+        // Sultry, romantic R&B keyboard chime synthesis
+        const chords = [
+          // Chord 1: F# maj7 (F#3, A#3, C#4, F4)
+          { time: 0.0, freqs: [185.00, 233.08, 277.18, 349.23], dur: 0.35, vol: 0.8 },
+          // Chord 2: G# dom7 (G#3, C4, D#4, F#4)
+          { time: 0.4, freqs: [207.65, 261.63, 311.13, 369.99], dur: 0.35, vol: 0.8 },
+          // Chord 3: A# min7 (A#3, C#4, F4, G#4)
+          { time: 0.8, freqs: [233.08, 277.18, 349.23, 415.30], dur: 0.8, vol: 1.0 }
+        ];
+
+        chords.forEach(chord => {
+          chord.freqs.forEach(freq => {
+            const osc = ctx.createOscillator();
+            const gainNode = ctx.createGain();
+            
+            // Warm, electric piano/tines style
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + chord.time);
+            
+            // Subtle vibrato (chorus effect)
+            const lfo = ctx.createOscillator();
+            const lfoGain = ctx.createGain();
+            lfo.frequency.setValueAtTime(4.5, now + chord.time);
+            lfoGain.gain.setValueAtTime(2.0, now + chord.time);
+            lfo.connect(lfoGain);
+            lfoGain.connect(osc.frequency);
+            
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.setValueAtTime(0, now + chord.time);
+            gainNode.gain.linearRampToValueAtTime(volume * chord.vol * 0.35, now + chord.time + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, now + chord.time + chord.dur);
+            
+            osc.connect(gainNode);
+            gainNode.connect(destination);
+            
+            lfo.start(now + chord.time);
+            osc.start(now + chord.time);
+            lfo.stop(now + chord.time + chord.dur);
+            osc.stop(now + chord.time + chord.dur + 0.02);
+          });
+        });
+        break;
+      }
+      case 'metal-pipe': {
+        // High-fidelity physical modeling synthesis of a falling metal pipe (clang & resonating ringing)
+        // 1. Core impact clonk
+        const sweepOsc = ctx.createOscillator();
+        const sweepGain = ctx.createGain();
+        sweepOsc.type = 'sine';
+        sweepOsc.frequency.setValueAtTime(380, now);
+        sweepOsc.frequency.exponentialRampToValueAtTime(75, now + 0.15);
+        sweepGain.gain.setValueAtTime(volume * 0.8, now);
+        sweepGain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        sweepOsc.connect(sweepGain);
+        sweepGain.connect(destination);
+        sweepOsc.start(now);
+        sweepOsc.stop(now + 0.18);
+
+        // 2. High-pitch metallic resonant chimes
+        const ringingFreqs = [1120, 1480, 1850, 2210, 2680, 3120];
+        ringingFreqs.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now);
+          
+          // Detune slightly over time for a realistic metal clang wobble
+          osc.frequency.linearRampToValueAtTime(freq * (1.0 + (idx % 2 === 0 ? 0.005 : -0.005)), now + 0.8);
+          
+          gainNode.gain.setValueAtTime(0, now);
+          gainNode.gain.linearRampToValueAtTime(volume * 0.4, now + 0.005);
+          // High-frequency decay faster, lower ring longer
+          const ringDecay = 0.4 + (5 - idx) * 0.12; 
+          gainNode.gain.exponentialRampToValueAtTime(0.001, now + ringDecay);
+          
+          osc.connect(gainNode);
+          gainNode.connect(destination);
+          
+          osc.start(now);
+          osc.stop(now + ringDecay + 0.02);
+        });
+
+        // 3. Highpass metallic crash noise
+        const bufferSize = Math.floor(ctx.sampleRate * 0.35);
+        const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+        const bData = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          bData[i] = Math.random() * 2 - 1;
+        }
+        const noise = ctx.createBufferSource();
+        noise.buffer = buffer;
+        
+        const filter = ctx.createBiquadFilter();
+        filter.type = 'highpass';
+        filter.frequency.setValueAtTime(3200, now);
+        
+        const noiseGain = ctx.createGain();
+        noiseGain.gain.setValueAtTime(volume * 0.35, now);
+        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
+        
+        noise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(destination);
+        
+        noise.start(now);
+        noise.stop(now + 0.35);
+        break;
+      }
+      case 'bing-chilling': {
+        // Cute, pentatonic, marimba-style Chinese melody (C5, D5, G5, A5, G5)
+        const notes = [523.25, 587.33, 783.99, 880.00, 783.99];
+        const beats = [0.0, 0.14, 0.28, 0.42, 0.56];
+        const durs = [0.12, 0.12, 0.12, 0.12, 0.35];
+
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          
+          // Rounded marimba/vibraphone chime sound
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(freq, now + beats[idx]);
+          
+          gainNode.gain.setValueAtTime(0, now);
+          gainNode.gain.setValueAtTime(0, now + beats[idx]);
+          gainNode.gain.linearRampToValueAtTime(volume * 0.6, now + beats[idx] + 0.005);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, now + beats[idx] + durs[idx]);
+          
+          osc.connect(gainNode);
+          gainNode.connect(destination);
+          
+          osc.start(now + beats[idx]);
+          osc.stop(now + beats[idx] + durs[idx] + 0.02);
+        });
+        break;
+      }
+      case 'dog-doin': {
+        // Comical synthesized puppy bark (rising pitch sweep + filtered bandpass noise)
+        const barks = [0.0, 0.28];
+        barks.forEach(time => {
+          const osc = ctx.createOscillator();
+          const gainNode = ctx.createGain();
+          
+          osc.type = 'sawtooth';
+          // Pitch starts at 180Hz and sweeps rapidly to 320Hz then drops
+          osc.frequency.setValueAtTime(180, now + time);
+          osc.frequency.linearRampToValueAtTime(340, now + time + 0.06);
+          osc.frequency.exponentialRampToValueAtTime(120, now + time + 0.15);
+          
+          const filter = ctx.createBiquadFilter();
+          filter.type = 'bandpass';
+          filter.frequency.setValueAtTime(450, now + time);
+          filter.Q.setValueAtTime(2.0, now + time);
+          
+          gainNode.gain.setValueAtTime(0, now);
+          gainNode.gain.setValueAtTime(0, now + time);
+          gainNode.gain.linearRampToValueAtTime(volume * 0.9, now + time + 0.01);
+          gainNode.gain.exponentialRampToValueAtTime(0.001, now + time + 0.16);
+          
+          osc.connect(filter);
+          filter.connect(gainNode);
+          gainNode.connect(destination);
+          
+          osc.start(now + time);
+          osc.stop(now + time + 0.18);
+        });
+        break;
+      }
       default: {
         const osc = ctx.createOscillator();
         const gainNode = createSynthVoice();
@@ -1145,14 +1318,79 @@ export class LyrebirdAudioEngine {
     }
   }
 
+  // Stop a specific active meme sound
+  public stopMemeSound(soundId: string) {
+    const active = this.activeMemeSounds.get(soundId);
+    if (active) {
+      try {
+        active.audio.pause();
+        active.audio.currentTime = 0;
+      } catch (err) {
+        console.warn("Error pausing audio object:", err);
+      }
+      this.activeMemeSounds.delete(soundId);
+      if (active.onEnd) {
+        active.onEnd();
+      }
+    }
+  }
+
+  // Stop all active meme sounds
+  public stopAllMemeSounds() {
+    const keys = Array.from(this.activeMemeSounds.keys());
+    for (const key of keys) {
+      this.stopMemeSound(key);
+    }
+  }
+
+  // Toggle looping property dynamically on an active sound
+  public setMemeSoundLoop(soundId: string, loop: boolean) {
+    const active = this.activeMemeSounds.get(soundId);
+    if (active) {
+      active.audio.loop = loop;
+    }
+  }
+
   // Play a soundboard meme or song, mixing it straight into our visualizer/destination output stream!
-  public playMemeSound(url: string, volume: number = 0.8, soundId?: string, playbackRate: number = 1.0) {
+  public playMemeSound(
+    url: string,
+    volume: number = 0.8,
+    soundId?: string,
+    playbackRate: number = 1.0,
+    loop: boolean = false,
+    onEnd?: () => void
+  ) {
+    if (soundId) {
+      // If already playing this ID, stop it first
+      this.stopMemeSound(soundId);
+    }
+
     if (soundId && !soundId.startsWith('custom-sound-') && !soundId.startsWith('local-file-') && !url.startsWith('/sounds/')) {
       // For all default built-in sound effects, synthesize directly to guarantee 100% offline uptime
       // and prevent CORS/network loading blocks! This is extremely robust and responsive.
       this.synthesizeMemeSound(soundId, volume);
+      if (onEnd) {
+        // Since synthesis is instantaneous and short, call onEnd after a brief delay
+        setTimeout(onEnd, 300);
+      }
       return;
     }
+
+    // Prepare helper to handle audio ending
+    const setupAudioEvents = (audio: HTMLAudioElement) => {
+      audio.loop = loop;
+      audio.onended = () => {
+        if (!audio.loop) {
+          if (soundId) {
+            this.activeMemeSounds.delete(soundId);
+          }
+          if (onEnd) onEnd();
+        }
+      };
+      if (soundId) {
+        this.activeMemeSounds.set(soundId, { audio, onEnd });
+      }
+    };
 
     try {
       this.ensureAudioContext();
@@ -1163,13 +1401,20 @@ export class LyrebirdAudioEngine {
         const audio = new Audio(url);
         audio.volume = volume;
         audio.playbackRate = playbackRate;
+        setupAudioEvents(audio);
         audio.play().catch(err => {
           console.error("[Soundboard Offline Fallback] Direct play failed:", err);
-          if (soundId) this.synthesizeMemeSound(soundId, volume);
+          if (soundId) {
+            this.synthesizeMemeSound(soundId, volume);
+            if (onEnd) setTimeout(onEnd, 300);
+          }
         });
       } catch (err) {
         console.error("Direct play element creation failed:", err);
-        if (soundId) this.synthesizeMemeSound(soundId, volume);
+        if (soundId) {
+          this.synthesizeMemeSound(soundId, volume);
+          if (onEnd) setTimeout(onEnd, 300);
+        }
       }
       return;
     }
@@ -1181,6 +1426,7 @@ export class LyrebirdAudioEngine {
       const audio = new Audio(url);
       audio.crossOrigin = "anonymous";
       audio.playbackRate = playbackRate;
+      setupAudioEvents(audio);
 
       const source = ctx.createMediaElementSource(audio);
       const gainNode = ctx.createGain();
@@ -1197,30 +1443,44 @@ export class LyrebirdAudioEngine {
 
       audio.play().catch(err => {
         console.warn("[WebAudio CORS restriction] MediaElementSource failed. Playing directly through speakers.", err);
+        // If MediaElementSource fails (e.g. CORS), we must recreate direct element to avoid routing crash
+        this.stopMemeSound(soundId || '');
+        
         const directAudio = new Audio(url);
         directAudio.volume = volume;
         directAudio.playbackRate = playbackRate;
+        setupAudioEvents(directAudio);
+        
         directAudio.play().catch(e => {
           console.error("Soundboard raw playback failed", e);
           if (soundId) {
             console.log("CORS/network playback failed. Invoking high-fidelity synthesizer fallback.");
             this.synthesizeMemeSound(soundId, volume);
+            if (onEnd) setTimeout(onEnd, 300);
           }
         });
       });
     } catch (err) {
       console.warn("Direct WebAudio link failed. Attempting direct speaker play:", err);
+      this.stopMemeSound(soundId || '');
       try {
         const audio = new Audio(url);
         audio.volume = volume;
         audio.playbackRate = playbackRate;
+        setupAudioEvents(audio);
         audio.play().catch(e => {
           console.error("Soundboard direct speaker play failed", e);
-          if (soundId) this.synthesizeMemeSound(soundId, volume);
+          if (soundId) {
+            this.synthesizeMemeSound(soundId, volume);
+            if (onEnd) setTimeout(onEnd, 300);
+          }
         });
       } catch (e) {
         console.error(e);
-        if (soundId) this.synthesizeMemeSound(soundId, volume);
+        if (soundId) {
+          this.synthesizeMemeSound(soundId, volume);
+          if (onEnd) setTimeout(onEnd, 300);
+        }
       }
     }
   }

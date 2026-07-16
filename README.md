@@ -36,25 +36,79 @@ The original Linux desktop application (written in Python/GTK) has been archived
 
 ---
 
-## 🚀 Running Locally
+## 🚀 Running Locally & Terminal Guide
 
-This project is built using modern front-end tooling (**Vite, React, TypeScript, Tailwind CSS**).
+If you are a complete beginner and have never used the terminal before, don't worry! Follow these step-by-step instructions to run Lyrebird locally on your machine.
 
-### Requirements
-- **Node.js** (v18+)
-- **npm** or **bun**
+### 💻 Step 1: Open Your Terminal
+- **Ubuntu/Debian/Linux Mint**: Press `Ctrl` + `Alt` + `T` on your keyboard.
+- **Fedora/RHEL**: Open your Applications launcher, search for **Terminal**, and launch it.
+- **Arch Linux**: Open your preferred terminal emulator (e.g., Alacritty, Kitty, GNOME Terminal).
 
-### Installation & Startup
+### 📦 Step 2: Install Node.js & npm (Prerequisites)
+The terminal is a text interface to run programs. You need **Node.js** to run the server. Install it by pasting the command for your Linux distribution into the terminal and pressing `Enter`:
 
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Start the development server:
-   ```bash
-   npm run dev
-   ```
-3. Open `http://localhost:3000` in your web browser.
+*   **Ubuntu / Debian / Linux Mint / Pop!_OS**:
+    ```bash
+    sudo apt update
+    sudo apt install -y nodejs npm
+    ```
+*   **Fedora / Red Hat**:
+    ```bash
+    sudo dnf install -y nodejs npm
+    ```
+*   **Arch Linux**:
+    ```bash
+    sudo pacman -S --noconfirm nodejs npm
+    ```
+
+Verify the installation succeeded by checking their versions:
+```bash
+node -v
+npm -v
+```
+
+### 📥 Step 3: Clone or Navigate to the Folder
+In the terminal, navigate to the folder where you have downloaded the Lyrebird source files. For example, if it's in your Downloads folder:
+```bash
+cd ~/Downloads/lyrebird-voice-changer
+```
+*(Note: `cd` stands for "change directory".)*
+
+### ⚙️ Step 4: Install Dependencies & Run
+1.  **Install project dependencies**: This downloads all the required libraries (like React and Tailwind CSS) into a local `node_modules` folder:
+    ```bash
+    npm install
+    ```
+2.  **Start the server**: This launches the development server on your machine:
+    ```bash
+    npm run dev
+    ```
+3.  **Open the App**: Once started, the terminal will print a link. Click it, or open your web browser and go to:
+    ```
+    http://localhost:3000
+    ```
+
+---
+
+## 🐧 Linux Desktop App Integration
+
+Want to launch Lyrebird like a native desktop application directly from your system's Applications Menu, without typing commands in the terminal every time? We've created an automated installer for you!
+
+### How to Install:
+1.  Open your terminal and navigate to the project directory.
+2.  Run the desktop installer script:
+    ```bash
+    ./install-linux-app.sh
+    ```
+    *(If it says permission denied, run `chmod +x install-linux-app.sh` first to make it executable.)*
+
+### What this installer does:
+- Copies the high-resolution Lyrebird icon to your system icons directory (`~/.local/share/icons/lyrebird.png`).
+- Generates a custom, standard Linux desktop launcher entry (`~/.local/share/applications/lyrebird.desktop`).
+- Sets up an automated start script (`lyrebird-app.sh`) that installs dependencies on first launch, boots up the local server, and automatically opens Lyrebird in your system's default browser.
+
+Now, you can simply press your keyboard's **Super/Windows** key, search for **"Lyrebird Voice Changer"**, and launch it with a single click!
 
 ---
 

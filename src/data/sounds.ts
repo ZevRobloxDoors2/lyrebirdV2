@@ -183,5 +183,53 @@ export const DEFAULT_SOUNDS: SoundboardSound[] = [
     url: '/sounds/run-meme.mp3',
     icon: '🏃‍♂️',
     keybind: 'l'
+  },
+  {
+    id: 'daddys-home',
+    name: "Daddy's Home (Usher)",
+    category: 'Legendary Memes',
+    url: '/sounds/daddys-home.mp3',
+    icon: '👔',
+    keybind: 'm'
+  },
+  {
+    id: 'metal-pipe',
+    name: 'Metal Pipe Falling',
+    category: 'Sound Effects',
+    url: '/sounds/metal-pipe.mp3',
+    icon: '🔩',
+    keybind: 'u'
+  },
+  {
+    id: 'bing-chilling',
+    name: 'Bing Chilling (John Cena)',
+    category: 'Legendary Memes',
+    url: '/sounds/bing-chilling.mp3',
+    icon: '🍦',
+    keybind: 'i'
+  },
+  {
+    id: 'robert-weide',
+    name: 'Directed by Robert B. Weide',
+    category: 'Legendary Memes',
+    url: '/sounds/robert-weide.mp3',
+    icon: '🎬',
+    keybind: 'o'
+  },
+  {
+    id: 'dog-doin',
+    name: 'What the Dog Doin?',
+    category: 'Rizz & Gamer',
+    url: '/sounds/dog-doin.mp3',
+    icon: '🐶',
+    keybind: 'p'
+  },
+  {
+    id: 'rickroll',
+    name: 'Never Gonna Give You Up',
+    category: 'Legendary Memes',
+    url: '/sounds/rickroll.mp3',
+    icon: '🕺',
+    keybind: 'n'
   }
 ];

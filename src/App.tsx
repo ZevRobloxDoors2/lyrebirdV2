@@ -19,7 +19,11 @@ import {
   Upload,
   PlusCircle,
   Disc,
-  Mic
+  Mic,
+  Repeat,
+  Square,
+  Play,
+  VolumeX
 } from 'lucide-react';
 import { Preset, SoundboardSound } from './types';
 import { DEFAULT_PRESETS } from './data/presets';
@@ -70,7 +74,14 @@ export default function App() {
   const [soundboardSearch, setSoundboardSearch] = useState('');
   const [selectedMemeCategory, setSelectedMemeCategory] = useState('All');
   const [isAddSoundOpen, setIsAddSoundOpen] = useState(false);
-  const [currentlyPlayingId, setCurrentlyPlayingId] = useState<string | null>(null);
+  const [playingSounds, setPlayingSounds] = useState<Record<string, boolean>>({});
+  const [loopingSoundIds, setLoopingSoundIds] = useState<Record<string, boolean>>({});
+
+  // MP3Paw online search & download states
+  const [isSearchingPaw, setIsSearchingPaw] = useState(false);
+  const [pawResults, setPawResults] = useState<any[]>([]);
+  const [showPawResults, setShowPawResults] = useState(false);
+  const [downloadingPawId, setDownloadingPawId] = useState<string | null>(null);
 
   // Recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -201,7 +212,7 @@ export default function App() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [soundboardSounds, soundboardVolume, rebindingSoundId]);
+  }, [soundboardSounds, soundboardVolume, rebindingSoundId, playingSounds, loopingSoundIds, soundboardSpeed]);
 
   // Handle Voice Changer Toggle (Switch)
   const handleToggleActive = async (checked: boolean) => {
@@ -404,13 +415,52 @@ export default function App() {
     setRecordedUrl(null);
   };
 
-  // Play Soundboard Sound
+  // Toggle dynamic looping for a soundcard
+  const toggleLoop = (soundId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLoopingSoundIds(prev => {
+      const isLoop = !prev[soundId];
+      engine.setMemeSoundLoop(soundId, isLoop);
+      return { ...prev, [soundId]: isLoop };
+    });
+  };
+
+  // Stop a playing soundboard sound
+  const stopMemeSound = (soundId: string) => {
+    engine.stopMemeSound(soundId);
+    setPlayingSounds(prev => {
+      const copy = { ...prev };
+      delete copy[soundId];
+      return copy;
+    });
+  };
+
+  // Play/Stop Soundboard Sound
   const triggerSound = (sound: SoundboardSound) => {
-    setCurrentlyPlayingId(sound.id);
-    engine.playMemeSound(sound.url, soundboardVolume, sound.id, soundboardSpeed);
-    setTimeout(() => {
-      setCurrentlyPlayingId(null);
-    }, 2500); // fade visual play indicator
+    const isPlaying = !!playingSounds[sound.id];
+    
+    if (isPlaying) {
+      stopMemeSound(sound.id);
+    } else {
+      setPlayingSounds(prev => ({ ...prev, [sound.id]: true }));
+      
+      const isLoop = !!loopingSoundIds[sound.id];
+      engine.playMemeSound(
+        sound.url, 
+        soundboardVolume, 
+        sound.id, 
+        soundboardSpeed, 
+        isLoop,
+        () => {
+          // Normal finish callback (only triggers if loop = false)
+          setPlayingSounds(prev => {
+            const copy = { ...prev };
+            delete copy[sound.id];
+            return copy;
+          });
+        }
+      );
+    }
   };
 
   // Add Custom Sound
@@ -439,6 +489,79 @@ export default function App() {
     setNewSoundUrl('');
     setNewSoundKeybind('');
     setIsAddSoundOpen(false);
+  };
+
+  // Search memes from MP3Paw via backend
+  const searchMp3Paw = async (query: string) => {
+    if (!query.trim()) return;
+    setIsSearchingPaw(true);
+    setShowPawResults(true);
+    setPawResults([]);
+    try {
+      const res = await fetch('/api/search-paw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPawResults(data.items || []);
+      } else {
+        console.error('Failed to search MP3Paw');
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSearchingPaw(false);
+    }
+  };
+
+  // Download sound from MP3Paw via backend and add to board
+  const downloadPawSound = async (item: any) => {
+    setDownloadingPawId(item.id);
+    try {
+      // Use the video title to create a safe filename
+      const safeFilename = item.title.toLowerCase().replace(/[^a-z0-9_-]/g, '-').slice(0, 30);
+      const res = await fetch('/api/download-paw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url: item.url,
+          filename: safeFilename,
+          title: item.title
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          // Add newly downloaded sound to the board!
+          const newSound: SoundboardSound = {
+            id: `paw-${Date.now()}`,
+            name: item.title.replace(/(\.mp3|sound effect|meme|troll)/gi, '').trim() || item.title,
+            category: 'My Downloads',
+            url: data.url, // "/sounds/<safeFilename>.mp3"
+            icon: '⚡',
+            isCustom: true
+          };
+
+          const customSoundsOnly = soundboardSounds.filter(s => s.isCustom);
+          const updatedCustom = [newSound, ...customSoundsOnly];
+          localStorage.setItem('lyrebird_custom_sounds', JSON.stringify(updatedCustom));
+          setSoundboardSounds([...DEFAULT_SOUNDS, ...updatedCustom]);
+        } else {
+          alert('Failed to process download.');
+        }
+      } else {
+        const errorData = await res.json();
+        alert(`Error downloading: ${errorData.error || 'Unknown error'}`);
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Network or server error while downloading.');
+    } finally {
+      setDownloadingPawId(null);
+    }
   };
 
   // Drag and Drop Audio Upload
@@ -975,6 +1098,19 @@ export default function App() {
                 </div>
 
                 <div className="flex items-center gap-2.5">
+                  {Object.keys(playingSounds).length > 0 && (
+                    <button
+                      onClick={() => {
+                        engine.stopAllMemeSounds();
+                        setPlayingSounds({});
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 bg-rose-500/10 border border-rose-500/30 text-rose-400 hover:bg-rose-500 hover:text-slate-950 text-xs font-semibold rounded-lg active:scale-95 transition-all duration-250 shrink-0"
+                    >
+                      <VolumeX className="w-3.5 h-3.5" />
+                      <span>Stop All ({Object.keys(playingSounds).length})</span>
+                    </button>
+                  )}
+
                   <button
                     onClick={() => setIsAddSoundOpen(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-pink-500 to-indigo-500 text-slate-950 text-xs font-semibold rounded-lg hover:brightness-110 active:scale-95 transition"
@@ -998,17 +1134,32 @@ export default function App() {
               {/* SEARCH & VOLUME BAR */}
               <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center bg-slate-950/40 p-4 rounded-xl border border-slate-900/60">
                 {/* Search field */}
-                <div className="md:col-span-4 relative">
-                  <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
-                    <Search className="w-4 h-4" />
-                  </span>
-                  <input
-                    type="text"
-                    value={soundboardSearch}
-                    onChange={(e) => setSoundboardSearch(e.target.value)}
-                    placeholder="Search memes, songs & sound FX..."
-                    className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/50 transition"
-                  />
+                <div className="md:col-span-4 flex gap-2">
+                  <div className="relative flex-1">
+                    <span className="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
+                      <Search className="w-4 h-4" />
+                    </span>
+                    <input
+                      type="text"
+                      value={soundboardSearch}
+                      onChange={(e) => setSoundboardSearch(e.target.value)}
+                      placeholder="Search memes, songs & sound FX..."
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500/50 transition"
+                    />
+                  </div>
+                  <button
+                    onClick={() => searchMp3Paw(soundboardSearch)}
+                    disabled={!soundboardSearch.trim() || isSearchingPaw}
+                    title="Search and download high-quality memes online from MP3Paw"
+                    className="px-3 py-2 bg-gradient-to-r from-pink-500 to-indigo-500 text-slate-950 font-bold rounded-lg text-xs hover:brightness-110 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed transition shrink-0 flex items-center gap-1"
+                  >
+                    {isSearchingPaw ? (
+                      <div className="w-3.5 h-3.5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Sparkles className="w-3.5 h-3.5 text-slate-950" />
+                    )}
+                    <span>Online Search</span>
+                  </button>
                 </div>
 
                 {/* Soundboard Volume Slider */}
@@ -1047,6 +1198,96 @@ export default function App() {
                   </span>
                 </div>
               </div>
+
+              {/* MP3PAW ONLINE RESULTS TRAY */}
+              <AnimatePresence>
+                {showPawResults && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="bg-slate-950/60 p-4 rounded-xl border border-pink-500/20 space-y-3.5 relative overflow-hidden"
+                  >
+                    <button
+                      onClick={() => setShowPawResults(false)}
+                      className="absolute top-3 right-3 text-slate-500 hover:text-slate-350"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                      <div className="w-2 h-2 rounded-full bg-pink-500 animate-pulse" />
+                      <h4 className="text-xs font-mono font-bold uppercase text-pink-400 tracking-wider">
+                        MP3Paw Online Search Results for "{soundboardSearch}"
+                      </h4>
+                    </div>
+
+                    {isSearchingPaw ? (
+                      <div className="flex flex-col items-center justify-center py-6 gap-2">
+                        <div className="w-6 h-6 border-2 border-pink-500 border-t-transparent rounded-full animate-spin" />
+                        <span className="text-[10px] font-mono text-slate-500">Contacting MP3Paw APIs...</span>
+                      </div>
+                    ) : pawResults.length === 0 ? (
+                      <div className="text-center py-4 text-xs text-slate-500 font-mono">
+                        No online results found. Try another query like "Vine Boom" or "Metal Pipe".
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[260px] overflow-y-auto pr-1">
+                        {pawResults.map((item) => {
+                          const isDownloading = downloadingPawId === item.id;
+                          return (
+                            <div
+                              key={item.id}
+                              className="bg-slate-900/60 p-2.5 rounded-lg border border-slate-850 flex items-center justify-between gap-3 text-left"
+                            >
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {item.thumbnail ? (
+                                  <img
+                                    src={item.thumbnail}
+                                    alt=""
+                                    referrerPolicy="no-referrer"
+                                    className="w-10 h-10 object-cover rounded bg-slate-950 shrink-0 border border-slate-800"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded bg-slate-950 flex items-center justify-center text-lg shrink-0">
+                                    🎵
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <p className="text-xs font-bold text-slate-200 truncate" title={item.title}>
+                                    {item.title}
+                                  </p>
+                                  <span className="text-[9px] font-mono text-slate-500">
+                                    Duration: {item.duration || 'N/A'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <button
+                                onClick={() => downloadPawSound(item)}
+                                disabled={downloadingPawId !== null}
+                                className="px-3 py-1.5 bg-pink-500/10 hover:bg-pink-500 text-pink-400 hover:text-slate-950 rounded-lg text-[10px] font-bold border border-pink-500/20 transition shrink-0 flex items-center gap-1 disabled:opacity-50"
+                              >
+                                {isDownloading ? (
+                                  <>
+                                    <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                                    <span>Downloading...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="w-3 h-3" />
+                                    <span>Import</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* CATEGORY SELECTOR CHIPS */}
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin">
@@ -1166,13 +1407,14 @@ export default function App() {
               {/* SOUNDS GRID */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                 {filteredSounds.map((sound) => {
-                  const isPlaying = currentlyPlayingId === sound.id;
+                  const isPlaying = !!playingSounds[sound.id];
+                  const isLooping = !!loopingSoundIds[sound.id];
                   
                   return (
                     <button
                       key={sound.id}
                       onClick={() => triggerSound(sound)}
-                      className={`relative p-3 rounded-xl border text-left flex flex-col justify-between h-[90px] group transition-all select-none ${
+                      className={`relative p-3 rounded-xl border text-left flex flex-col justify-between min-h-[100px] group transition-all select-none ${
                         isPlaying 
                           ? 'bg-slate-900 border-pink-500 ring-1 ring-pink-500/30 shadow-md shadow-pink-500/5'
                           : 'bg-slate-900/40 border-slate-900/80 hover:border-slate-850 hover:bg-slate-900/80'
@@ -1181,35 +1423,50 @@ export default function App() {
                       <div className="flex items-start justify-between w-full">
                         <span className="text-xl">{sound.icon || '🎵'}</span>
                         
-                        {rebindingSoundId === sound.id ? (
-                          <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-pink-500 text-slate-950 border border-pink-400 animate-pulse font-bold">
-                            PRESS...
-                          </span>
-                        ) : (
-                          <div
-                            title="Click to rebind hotkey"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setRebindingSoundId(sound.id);
-                            }}
-                            className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-900 group-hover:text-pink-400 group-hover:border-pink-500/20 transition-all flex items-center gap-1 cursor-pointer"
-                          >
-                            <KeyboardIcon className="w-2.5 h-2.5" />
-                            <span>{sound.keybind ? sound.keybind.toUpperCase() : 'BIND'}</span>
-                          </div>
-                        )}
-
-                        {sound.isCustom && (
+                        <div className="flex items-center gap-1.5">
+                          {/* Loop Button */}
                           <button
-                            onClick={(e) => handleDeleteSound(sound.id, e)}
-                            className="p-1 rounded text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition opacity-0 group-hover:opacity-100"
+                            title={isLooping ? "Dynamic Looping Active (Click to toggle)" : "Enable looping for this sound"}
+                            onClick={(e) => toggleLoop(sound.id, e)}
+                            className={`p-1 rounded text-[9px] transition active:scale-95 flex items-center justify-center ${
+                              isLooping
+                                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                                : 'bg-slate-950 text-slate-500 border border-slate-900 hover:text-slate-300 hover:border-slate-800'
+                            }`}
                           >
-                            <Trash2 className="w-3" />
+                            <Repeat className={`w-3 h-3 ${isLooping ? 'animate-pulse' : ''}`} />
                           </button>
-                        )}
+
+                          {rebindingSoundId === sound.id ? (
+                            <span className="text-[8px] font-mono px-1.5 py-0.5 rounded bg-pink-500 text-slate-950 border border-pink-400 animate-pulse font-bold">
+                              PRESS...
+                            </span>
+                          ) : (
+                            <div
+                              title="Click to rebind hotkey"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRebindingSoundId(sound.id);
+                              }}
+                              className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-slate-950 text-slate-400 border border-slate-900 group-hover:text-pink-400 group-hover:border-pink-500/20 transition-all flex items-center gap-1 cursor-pointer"
+                            >
+                              <KeyboardIcon className="w-2.5 h-2.5" />
+                              <span>{sound.keybind ? sound.keybind.toUpperCase() : 'BIND'}</span>
+                            </div>
+                          )}
+
+                          {sound.isCustom && (
+                            <button
+                              onClick={(e) => handleDeleteSound(sound.id, e)}
+                              className="p-1 rounded text-slate-600 hover:text-rose-400 hover:bg-rose-500/10 transition opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 className="w-3" />
+                            </button>
+                          )}
+                        </div>
                       </div>
 
-                      <div className="w-full">
+                      <div className="w-full mt-2">
                         <p className="text-xs font-bold text-slate-200 line-clamp-1 group-hover:text-white transition-colors">
                           {sound.name}
                         </p>
@@ -1218,12 +1475,18 @@ export default function App() {
                         </p>
                       </div>
 
-                      {/* Play indicator */}
-                      {isPlaying && (
-                        <div className="absolute right-2 bottom-2">
-                          <Disc className="w-4 h-4 text-pink-400 animate-spin" />
-                        </div>
-                      )}
+                      {/* Play/Stop status indicator */}
+                      <div className="absolute right-2.5 bottom-2.5">
+                        {isPlaying ? (
+                          <div className="flex items-center justify-center bg-pink-500 text-slate-950 rounded-full p-1 shadow-lg shadow-pink-500/20">
+                            <Square className="w-2.5 h-2.5 fill-current" />
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-center opacity-0 group-hover:opacity-60 bg-slate-950 text-slate-400 rounded-full p-1 border border-slate-800 transition-opacity">
+                            <Play className="w-2.5 h-2.5 fill-current text-[10px]" />
+                          </div>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
