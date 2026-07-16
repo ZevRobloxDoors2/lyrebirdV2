@@ -33,11 +33,21 @@ SERVER_PID=$!
 echo "Launching dev server..."
 sleep 2.5
 
-# Open in standard web browser
+# Open in browser (prefer App Mode for a native Linux desktop experience)
 URL="http://localhost:3000"
 echo "Opening Lyrebird at $URL"
 
-if command -v xdg-open &> /dev/null; then
+if command -v google-chrome &> /dev/null; then
+    google-chrome --app="$URL"
+elif command -v chromium &> /dev/null; then
+    chromium --app="$URL"
+elif command -v chromium-browser &> /dev/null; then
+    chromium-browser --app="$URL"
+elif command -v brave-browser &> /dev/null; then
+    brave-browser --app="$URL"
+elif command -v edge &> /dev/null; then
+    edge --app="$URL"
+elif command -v xdg-open &> /dev/null; then
     xdg-open "$URL"
 elif command -v sensible-browser &> /dev/null; then
     sensible-browser "$URL"

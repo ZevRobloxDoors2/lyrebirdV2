@@ -1,6 +1,6 @@
-# Lyrebird Web (Voice Changer)
+# 🦜 Lyrebird Web (Voice Changer)
 
-A fully modernized, interactive, web-based implementation of **Lyrebird**, written in **React, TypeScript, and Tailwind CSS**. Leveraging high-performance, low-latency **Web Audio API**, this application brings powerful real-time voice modification, high-fidelity visualization, and a complete meme soundboard straight to your browser.
+A fully modernized, interactive, web-based implementation of **Lyrebird**, written in **React, TypeScript, and Tailwind CSS**. Leveraging the high-performance, low-latency **Web Audio API**, this application brings powerful real-time voice modification, high-fidelity visualization, and a complete meme soundboard straight to your browser.
 
 ![Lyrebird Preview](icon.png)
 
@@ -28,27 +28,46 @@ The original Linux desktop application (written in Python/GTK) has been archived
 - **Visualizer Engine**: High-performance, low-latency canvas drawing.
 - **Multiple Modes**: Toggle between **Oscilloscope Waveform** (visualizing voice pressure in real-time), **Frequency Spectrum** (detailing frequency bands), and an elegant **Circular Soundwave Circle**.
 
-### 🔊 High-Fidelity Meme Soundboard & Recorder
-- **Curated Soundboard**: Packed with offline-ready classic meme sounds (Vine Boom, Roblox Oof, FBI Open Up, GigaChad, Emotional Damage, etc.).
+### 🔊 High-Fidelity Meme Soundboard
+- **Online MP3 Search**: Built-in search integration to discover and instantly download the latest memes and sound effects directly from the web!
+- **Curated Offline Soundboard**: Packed with offline-ready classic meme sounds (Vine Boom, Roblox Oof, FBI Open Up, GigaChad, Emotional Damage, etc.).
 - **Pitch & Speed Modulator**: Speed up or slow down meme clips from `0.5x` to `2.0x` on-the-fly, pitch-shifting them dynamically.
 - **Voice Clip Recorder**: Record and capture your own vocal riffs or sound effects, assign custom emoji icons, name them, and save them directly to your custom local soundboard.
 - **Drag & Drop MP3 Upload**: Drag and drop any `.mp3` or `.wav` audio track onto the interface to instantly load custom memes.
 
 ---
 
-## 🚀 Running Locally & Terminal Guide
+## 🐧 Installing as a Native Linux App
 
-If you are a complete beginner and have never used the terminal before, don't worry! Follow these step-by-step instructions to run Lyrebird locally on your machine.
+Want to launch Lyrebird like a native desktop application directly from your system's Applications Menu? We've included an automated installer that adds a beautiful desktop launcher and runs the app in a dedicated, chromeless window!
 
-### 💻 Step 1: Open Your Terminal
-- **Ubuntu/Debian/Linux Mint**: Press `Ctrl` + `Alt` + `T` on your keyboard.
-- **Fedora/RHEL**: Open your Applications launcher, search for **Terminal**, and launch it.
-- **Arch Linux**: Open your preferred terminal emulator (e.g., Alacritty, Kitty, GNOME Terminal).
+### Quick Install (Recommended)
 
-### 📦 Step 2: Install Node.js & npm (Prerequisites)
-The terminal is a text interface to run programs. You need **Node.js** to run the server. Install it by pasting the command for your Linux distribution into the terminal and pressing `Enter`:
+1. Open your terminal and navigate to the folder where you extracted Lyrebird.
+2. Run the automated Linux Desktop Installer:
+   ```bash
+   chmod +x install-linux-app.sh
+   ./install-linux-app.sh
+   ```
 
-*   **Ubuntu / Debian / Linux Mint / Pop!_OS**:
+**What this does:**
+- 🖼️ Installs the high-resolution Lyrebird icon to your system (`~/.local/share/icons`).
+- 🚀 Creates a Linux desktop shortcut (`~/.local/share/applications/lyrebird.desktop`).
+- 🪟 Configures the launcher to open Lyrebird in **App Mode** (using Chrome/Chromium if available), giving it a standalone application window without the browser URL bar or tabs!
+
+**To launch it:**
+Simply press your keyboard's **Super/Windows** key, search for **"Lyrebird Voice Changer"**, and launch it with a single click!
+
+---
+
+## 💻 Manual Terminal Instructions (Developers)
+
+If you prefer to run the server manually for development, follow these steps:
+
+### 1. Install Node.js & npm
+You need **Node.js** installed on your system to run the backend server.
+
+*   **Ubuntu / Debian / Linux Mint**:
     ```bash
     sudo apt update
     sudo apt install -y nodejs npm
@@ -62,53 +81,18 @@ The terminal is a text interface to run programs. You need **Node.js** to run th
     sudo pacman -S --noconfirm nodejs npm
     ```
 
-Verify the installation succeeded by checking their versions:
+### 2. Start the Application
+Navigate to the project folder, install dependencies, and start the development server:
+
 ```bash
-node -v
-npm -v
+# 1. Install all required dependencies
+npm install
+
+# 2. Start the backend + frontend dev server
+npm run dev
 ```
 
-### 📥 Step 3: Clone or Navigate to the Folder
-In the terminal, navigate to the folder where you have downloaded the Lyrebird source files. For example, if it's in your Downloads folder:
-```bash
-cd ~/Downloads/lyrebird-voice-changer
-```
-*(Note: `cd` stands for "change directory".)*
-
-### ⚙️ Step 4: Install Dependencies & Run
-1.  **Install project dependencies**: This downloads all the required libraries (like React and Tailwind CSS) into a local `node_modules` folder:
-    ```bash
-    npm install
-    ```
-2.  **Start the server**: This launches the development server on your machine:
-    ```bash
-    npm run dev
-    ```
-3.  **Open the App**: Once started, the terminal will print a link. Click it, or open your web browser and go to:
-    ```
-    http://localhost:3000
-    ```
-
----
-
-## 🐧 Linux Desktop App Integration
-
-Want to launch Lyrebird like a native desktop application directly from your system's Applications Menu, without typing commands in the terminal every time? We've created an automated installer for you!
-
-### How to Install:
-1.  Open your terminal and navigate to the project directory.
-2.  Run the desktop installer script:
-    ```bash
-    ./install-linux-app.sh
-    ```
-    *(If it says permission denied, run `chmod +x install-linux-app.sh` first to make it executable.)*
-
-### What this installer does:
-- Copies the high-resolution Lyrebird icon to your system icons directory (`~/.local/share/icons/lyrebird.png`).
-- Generates a custom, standard Linux desktop launcher entry (`~/.local/share/applications/lyrebird.desktop`).
-- Sets up an automated start script (`lyrebird-app.sh`) that installs dependencies on first launch, boots up the local server, and automatically opens Lyrebird in your system's default browser.
-
-Now, you can simply press your keyboard's **Super/Windows** key, search for **"Lyrebird Voice Changer"**, and launch it with a single click!
+Finally, open your web browser and navigate to: **`http://localhost:3000`**
 
 ---
 
