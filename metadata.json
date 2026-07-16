@@ -1,0 +1,10 @@
+{
+  "name": "Lyrebird V2 (Created by EyesHD)",
+  "description": "A simple and powerful real-time voice changer that replicates the classic Lyrebird Linux desktop application in the browser using Web Audio API.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
