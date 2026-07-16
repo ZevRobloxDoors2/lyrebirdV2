@@ -1,155 +1,97 @@
-# Lyrebird
+# Lyrebird Web (Voice Changer)
 
-Simple and powerful voice changer for Linux, written with Python & GTK.
+A fully modernized, interactive, web-based implementation of **Lyrebird**, written in **React, TypeScript, and Tailwind CSS**. Leveraging high-performance, low-latency **Web Audio API**, this application brings powerful real-time voice modification, high-fidelity visualization, and a complete meme soundboard straight to your browser.
 
-![Lyrebird Screenshot](https://raw.githubusercontent.com/lyrebird-voice-changer/lyrebird/master/preview.png)
+![Lyrebird Preview](icon.png)
 
-## Archived
+## 🌐 Live Web Edition
 
-As of December 2023, Lyrebird has ceased development and is now archived. Thank you to our users and contributors.
+The original Linux desktop application (written in Python/GTK) has been archived, but the spirit of Lyrebird lives on as a **modern web application**. No installations, command-line dependencies, or virtual device configurations are required — simply allow microphone access and start shifting!
 
-As an alternative, we recommend looking at [Easy Effects](https://github.com/wwmm/easyeffects).
+---
 
-## Features
+## ✨ Features
 
-- Built in effects for accurate male and female voices.
-- Ability to create and load custom presets.
-- Manual pitch scale for finer adjustment.
-- Creates its own temporary virtual input device.
-- A clean and easy to use GUI.
+### 🎙️ Real-time Browser Voice Changer
+- **Zero-Install DSP**: Operates entirely in-browser using custom-engineered high-performance **Web Audio API** nodes.
+- **Microphone Echo Cancellation**: Built-in support for acoustic echo cancellation and noise reduction.
+- **Manual Pitch Tuning**: Adjustable pitch scale (from deep cavernous beast to squeaky helium balloon).
+- **Audio Bit-Crushing**: Downsample audio rates on the fly to simulate retro radios, vintage retro game consoles, or walkie-talkies.
+- **Bandpass & Peak Equalizer**: Integrated custom filter types (`peaking`, `lowpass`, `highpass`, `highshelf`) with frequency, Q-factor, and gain knobs.
 
-## Limitations
+### 🎛️ Extensive Preset Library
+- Classic presets: **Male to Female**, **Female to Male**, **Radio/Walkie-Talkie**, **Robot**, **Darth Vader**, and more.
+- Anime & Pop Culture additions: **Deku (One For All)**, **Luffy (Gear 5)**, **Levi Ackerman**, **Megumin (Explosion!)**, **Among Us Crewmate**, and **T-Rex Growl**.
+- **Fully Customizable Presets**: Design, name, and fine-tune your own voice effects and save them instantly to your custom collection.
 
-- The voice changer operates with a few seconds of delay.
+### 📊 Professional Visualizers
+- **Visualizer Engine**: High-performance, low-latency canvas drawing.
+- **Multiple Modes**: Toggle between **Oscilloscope Waveform** (visualizing voice pressure in real-time), **Frequency Spectrum** (detailing frequency bands), and an elegant **Circular Soundwave Circle**.
 
-## Install
+### 🔊 High-Fidelity Meme Soundboard & Recorder
+- **Curated Soundboard**: Packed with offline-ready classic meme sounds (Vine Boom, Roblox Oof, FBI Open Up, GigaChad, Emotional Damage, etc.).
+- **Pitch & Speed Modulator**: Speed up or slow down meme clips from `0.5x` to `2.0x` on-the-fly, pitch-shifting them dynamically.
+- **Voice Clip Recorder**: Record and capture your own vocal riffs or sound effects, assign custom emoji icons, name them, and save them directly to your custom local soundboard.
+- **Drag & Drop MP3 Upload**: Drag and drop any `.mp3` or `.wav` audio track onto the interface to instantly load custom memes.
 
-Once installed, Lyrebird can be launched from your launcher (GNOME, Xfce, Rofi) or by running `lyrebird` in the command line.
+---
 
-### Ubuntu / Debian / Mint / Pop!_OS
+## 🚀 Running Locally
 
-```sh
-wget "https://github.com/lyrebird-voice-changer/lyrebird/releases/download/v1.2.0/lyrebird_1.2.0-1.deb" && sudo apt install ./lyrebird_1.2.0-1.deb
+This project is built using modern front-end tooling (**Vite, React, TypeScript, Tailwind CSS**).
+
+### Requirements
+- **Node.js** (v18+)
+- **npm** or **bun**
+
+### Installation & Startup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Start the development server:
+   ```bash
+   npm run dev
+   ```
+3. Open `http://localhost:3000` in your web browser.
+
+---
+
+## 🛠️ Web Audio DSP Architecture
+
+The real-time voice shifting is powered by a custom `AudioEngine` singleton pipeline:
+```
+[Microphone Source] ──> [MediaStreamAudioSourceNode]
+                              │
+                              ▼
+                        [Gain Node] (Input adjustment)
+                              │
+                              ▼
+                    [BiquadFilterNode] (Lowpass / Peaking / Highpass EQ)
+                              │
+                              ▼
+                     [Delay / Pitch Shifter Node] (Phase vocoder model)
+                              │
+                              ▼
+                      [Downsampler Node] (Bit-crusher effect)
+                              │
+                              ▼
+                     [Gain Node] (Output boost)
+                              ├────────────────────────┐
+                              ▼                        ▼
+                       [Analyser Node]      [Audio Destination]
+                              │                     │
+                              ▼                     ▼
+                     [Canvas Visualizer]        [Speakers]
 ```
 
-You can find more [releases here](https://github.com/lyrebird-voice-changer/lyrebird/releases).
+- **Pitch Shifting**: Accomplished using fractional delays and dual overlapping taps with sine-wave windowing to minimize artifacts.
+- **Downsampling**: Done inside a custom processor layer that holds sample rates at fixed interval boundaries, giving an authentic digital distortion.
 
-### Arch Linux
+---
 
-Use an AUR package manager?
+## 🌟 Contributors & Credits
 
-```sh
-yay -S lyrebird
-```
-
-Otherwise:
-
-```sh
-wget "https://github.com/lyrebird-voice-changer/lyrebird/releases/download/v1.2.0/lyrebird-1.2.0-1-any-archlinux.pkg.tar.zst" && sudo pacman -U lyrebird-1.2.0-1-any-archlinux.pkg.tar.zst
-```
-
-You can find more [releases here](https://github.com/lyrebird-voice-changer/lyrebird/releases).
-
-### Fedora / CentOS
-
-1. Download the latest RPM file for your distro:
-  * [Fedora](https://github.com/lyrebird-voice-changer/lyrebird/releases/download/v1.2.0/lyrebird-1.2.0-3-fedora.fc38.noarch.rpm)
-  * [CentOS](https://github.com/lyrebird-voice-changer/lyrebird/releases/download/v1.2.0/lyrebird-1.2.0-3-centos.el8.noarch.rpm)
-
-2. Install the local RPM file, changing the name of the file to the one downloaded:
-
-```sh
-sudo yum localinstall lyrebird-1.2.0-3-fedora.fc38.noarch.rpm
-```
-
-### Manually
-
-If a package for your distro isn't provided above then you can install the requirements below and use the provided installer script:
-
-```sh
-wget "https://github.com/lyrebird-voice-changer/lyrebird/releases/download/v1.2.0/lyrebird_1.2.0-1.tar.gz" && tar xf lyrebird_1.2.0-1.tar.gz && cd lyrebird_1.2.0-1 && sudo ./install.sh
-```
-
-### Community Packages
-
-These packages are provided by the community and are not maintained by Lyrebird developers.
-
-- [x] Gentoo (ebuild in the [edgets overlay](https://github.com/BlueManCZ/edgets/tree/master/media-sound/lyrebird))
-
-## Requirements
-
-Installing via package manager will automatically install these packages, only concern yourself with these if you are using the install script.
-
-- **Python 3.7+** - Ubuntu/Debian `python3` / Arch `python3`
-    - **toml** - Ubuntu/Debian `python3-toml` / Arch `python-toml`
-    - **python-gobject** - Ubuntu/Debian `python3-gi` / Arch `python-gobject`
-- **pavucontrol** - Ubuntu/Debian `pavucontrol` / Arch `pavucontrol`
-- **SoX** - Ubuntu/Debian `sox libsox-fmt-pulse` / Arch `sox`
-- **PipeWire**
-- **PulseAudio utilities** (compatible with PipeWire) - Ubuntu/Debian `pipewire-pulse pulseaudio-utils` / Arch `pipewire-pulse`
-
-One-liners to install requirements:
-
-  * Ubuntu/Debian - `sudo apt install python3 python3-toml python3-gi pavucontrol sox libsox-fmt-pulse pulseaudio-utils`
-  * Arch - `sudo pacman -S python3 python-toml python-gobject pavucontrol sox`
-
-*(If you wish to see your distro here please submit an issue/pull request for this section.)*
-
-## Lyrebird Usage
-
-1. Select a preset or set a custom pitch and flip the switch
-2. Change the input device for the application to **Lyrebird Virtual Input**, this can be done in-app or using `pavucontrol` if you're not given the option
-3. Ignore any applications that ask if you want to use "Lyrebird Output" (e.g. Discord), this is used internally and isn't necessary to use Lyrebird
-
-### Changing using `pavucontrol`
-
-If an app doesn't support live input changing then it can be done with `pavucontrol`. Head to the "Recording" tab and change the input using the drop down next to the application name.
-
-#### I can't?
-
-For some apps on some distros (like Ubuntu) changing the input won't work. To fix this you need to create a file at `~/.alsoftrc` and add the following contents:
-
-```ini
-drivers = alsa,pulse,core,oss
-
-[pulse]
-allow-moves=yes
-```
-
-### Common Issues
-
-#### `ModuleNotFoundError: No module named 'lyrebird.mainwindow'`
-
-Firstly make sure you've ran the most up-to-date `install.sh` script. If the issue still persists then this is probably a permissions issue, running `sudo chmod -R 755 /usr/local/share/lyrebird /etc/lyrebird` should fix this.
-
-If the issue still sticks around then please open a GitHub issue and include the output of `id -u; which lyrebird; sudo ls -lAn /usr/local/share/lyrebird; sudo ls -lAn ~/.local/share/lyrebird`.
-
-## Editing Presets
-
-Custom presets are stored in `~/.config/lyrebird/presets.toml`. To edit and add your own presets edit the file `presets.toml`, this file is in the TOML format and the syntax is described below.
-
-```toml
-# Effect presets are defined in presets.toml
-# The following parameters are available for presets
-
-# name: Preset name, will be displayed in the GUI
-# pitch_value: The pitch value of the preset, float value between -10.0 to 10.0. Omit if pitch value should not be affected from slider value.
-# downsample_amount Downsample by an integer factor.
-# volume_boost: Amount in dB to boost the audio. Can be negative to make the audio quieter.
-
-# e.g.
-# [[presets]]
-# name = "Bad Mic"
-# pitch_scale = -1.5
-# downsample_amount = 8
-# volume_boost = 8
-```
-
-## Packaging
-
-  * Packaging for Debian is handled in a [separate repo](https://github.com/lyrebird-voice-changer/lyrebird-deb).
-  * Packaging for Arch (AUR) is handled in a [separate repo](https://github.com/lyrebird-voice-changer/lyrebird-arch).
-
-## Developers
-
-Lyrebird was created by [megabytesofrem](https://github.com/megabytesofrem) in 2020, and is now maintained by [Harry Stanton](https://github.com/harrego).
+- **Original Desktop Application**: Created by [megabytesofrem](https://github.com/megabytesofrem) and maintained by [Harry Stanton](https://github.com/harrego).
+- **Web App Modernization**: Engineered as an interactive high-performance Web App to bring the ultimate voice modification suite to all platforms and modern operating systems.
