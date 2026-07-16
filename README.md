@@ -37,14 +37,42 @@ The original Linux desktop application (written in Python/GTK) has been archived
 
 ---
 
+## 📥 How to Download and Extract
+
+If you are viewing this on GitHub, follow these steps to get the app onto your computer:
+
+1. **Download the ZIP**: Click the green **"<> Code"** button near the top right of the repository page and select **"Download ZIP"**.
+2. **Find the ZIP file**: 
+   - **Standard Linux/Mac**: Open your file manager and go to your **Downloads** folder. You should see `lyrebirdV2-main.zip`.
+   - **Chromebook (Chrome OS)**: Open your **Files** app, go to **Downloads**, and **drag & drop** the `lyrebirdV2-main.zip` file into the **"Linux files"** tab on the left sidebar.
+3. **Extract it**: 
+   - **Standard Linux/Mac**: Right-click on `lyrebirdV2-main.zip` and select **"Extract Here"** (or use your system's archive manager).
+   - **Chromebook**: Open your Terminal and type these commands to install unzip and extract the file:
+     ```bash
+     sudo apt update && sudo apt install unzip -y
+     unzip lyrebirdV2-main.zip
+     ```
+4. You should now see a folder named `lyrebirdV2-main`.
+
+---
+
 ## 🐧 Installing as a Native Linux App
 
 Want to launch Lyrebird like a native desktop application directly from your system's Applications Menu? We've included an automated installer that adds a beautiful desktop launcher and runs the app in a dedicated, chromeless window!
 
 ### Quick Install (Recommended)
 
-1. Open your terminal and navigate to the folder where you extracted Lyrebird.
-2. Run the automated Linux Desktop Installer:
+1. Open your terminal.
+2. **Navigate to the folder where you extracted Lyrebird.** You must `cd` into it, or you will get a "No such file or directory" error.
+   - **Standard Linux/Mac**:
+     ```bash
+     cd ~/Downloads/lyrebirdV2-main
+     ```
+   - **Chromebook (if you followed the steps above)**:
+     ```bash
+     cd ~/lyrebirdV2-main
+     ```
+3. Run the automated Linux Desktop Installer:
    ```bash
    chmod +x install-linux-app.sh
    ./install-linux-app.sh
