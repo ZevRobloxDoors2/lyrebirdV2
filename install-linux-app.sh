@@ -33,7 +33,7 @@ Name=Lyrebird Voice Changer
 Comment=Real-time voice changer and meme soundboard
 Exec="$DIR/lyrebird-app.sh"
 Icon=$ICON_PATH
-Terminal=true
+Terminal=false
 Categories=AudioVideo;Audio;Utility;
 EOL
 
